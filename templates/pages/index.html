@@ -1,0 +1,52 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="console-container">
+    <div class="header">
+        <div class="lcars-bar"></div>
+        <h1>HAL9000 COMMAND CENTER</h1>
+        <div class="lcars-bar"></div>
+    </div>
+    
+    <div class="main-content">
+        <div class="side-panel left">
+            <div class="button-group">
+                <a href="{{ url_for('system.index') }}" class="lcars-button">SYSTEM</a>
+                <a href="{{ url_for('terminal.index') }}" class="lcars-button">TERMINAL</a>
+                <a href="{{ url_for('api_hub.index') }}" class="lcars-button">API HUB</a>  <!-- Changed from 'api.index' to 'api_hub.index' -->
+            </div>
+        </div>
+        
+        <div class="central-display">
+            <div class="display-header">
+                <span class="stardate">STARDATE: <span id="current-date"></span></span>
+            </div>
+            <div class="display-content">
+                <h2>MAIN VIEWER</h2>
+                <div class="data-grid">
+                    <div class="grid-item">
+                        <h3>SYSTEM STATUS</h3>
+                        <p>All systems operational</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="side-panel right">
+            <div class="button-group">
+                <a href="{{ url_for('dashboard.index') }}" class="lcars-button">DASHBOARD</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateStardate() {
+        const now = new Date();
+        const stardate = now.getFullYear() + Math.round((now.getMonth() * 100 + now.getDate()) / 365 * 1000) / 1000;
+        document.getElementById('current-date').textContent = stardate.toFixed(2);
+    }
+    updateStardate();
+    setInterval(updateStardate, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAL9000 - Command Center</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/matrix.css') }}">
+</head>
+<body>
+    <canvas id="matrixCanvas" class="matrix-background"></canvas>
+    {% block content %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/matrix-rain.js') }}"></script>
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const matrixRain = new MatrixRain(canvas);
+        matrixRain.animate();
+    </script>
+</body>
+</html>

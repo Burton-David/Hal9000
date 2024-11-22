@@ -1,0 +1,86 @@
+:root {
+    --lcars-orange: #ff9900;
+    --lcars-purple: #cc99cc;
+    --lcars-blue: #9999ff;
+    --lcars-bg: #000;
+    --lcars-text: #fff;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--lcars-bg);
+    color: var(--lcars-text);
+    font-family: 'Arial', sans-serif;
+}
+
+.console-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--lcars-bg);
+}
+
+.lcars-bar {
+    height: 2rem;
+    flex-grow: 1;
+    background-color: var(--lcars-orange);
+    margin: 0 1rem;
+    border-radius: 1rem;
+}
+
+h1 {
+    margin: 0;
+    padding: 0 2rem;
+    color: var(--lcars-orange);
+    font-size: 1.5rem;
+}
+
+.main-content {
+    display: flex;
+    flex-grow: 1;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.side-panel {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lcars-button {
+    background-color: var(--lcars-purple);
+    border: none;
+    border-radius: 1rem;
+    padding: 1rem;
+    color: var(--lcars-text);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.lcars-button:hover {
+    background-color: var(--lcars-orange);
+}
+
+.central-display {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 255, 0.1);
+    border: 2px solid var(--lcars-blue);
+    border-radius: 1rem;
+    padding: 1rem;
+}

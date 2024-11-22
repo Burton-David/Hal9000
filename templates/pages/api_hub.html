@@ -1,0 +1,178 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="console-container">
+    <div class="header">
+        <div class="lcars-bar"></div>
+        <h1>HAL9000 API INTERFACE</h1>
+        <div class="lcars-bar"></div>
+    </div>
+    
+    <div class="navigation-bar">
+        <a href="{{ url_for('index') }}" class="lcars-button nav-button">HOME</a>
+    </div>
+    
+    <div class="main-content">
+        <div class="chat-interface">
+            <div id="chat-output" class="chat-output"></div>
+            <div class="file-upload">
+                <input type="file" id="file-input" class="file-input" multiple>
+                <label for="file-input" class="lcars-button upload-button">UPLOAD FILES</label>
+                <div id="file-list" class="file-list"></div>
+            </div>
+            <div class="input-area">
+                <textarea id="user-input" class="user-input" placeholder="Enter your message..." rows="3"></textarea>
+                <button onclick="sendMessage()" class="lcars-button send-button">SEND</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Existing styles remain... */
+
+.navigation-bar {
+    padding: 10px 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.nav-button {
+    min-width: 100px;
+}
+
+.file-upload {
+    margin-bottom: 15px;
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-button {
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.file-list {
+    padding: 10px;
+    border: 1px solid var(--lcars-purple);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    margin-bottom: 10px;
+    min-height: 50px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid rgba(153, 153, 255, 0.2);
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.remove-file {
+    color: var(--lcars-orange);
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(255, 153, 0, 0.1);
+}
+</style>
+
+<script>
+// Existing sendMessage function remains...
+
+// Add file handling functionality
+document.getElementById('file-input').addEventListener('change', function(e) {
+    const fileList = document.getElementById('file-list');
+    const files = Array.from(e.target.files);
+    
+    files.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+            <span class="remove-file">×</span>
+        `;
+        
+        fileItem.querySelector('.remove-file').addEventListener('click', () => {
+            fileItem.remove();
+        });
+        
+        fileList.appendChild(fileItem);
+    });
+});
+
+// Modify sendMessage to include files
+async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const output = document.getElementById('chat-output');
+    const fileList = document.getElementById('file-list');
+    const message = input.value.trim();
+    const files = Array.from(fileList.children).map(item => item.querySelector('span').textContent);
+    
+    if (!message && files.length === 0) return;
+    
+    // Create message content including file list
+    let messageContent = message;
+    if (files.length > 0) {
+        messageContent += '\n\nAttached files:\n' + files.join('\n');
+    }
+    
+    // Add user message to chat
+    const timestamp = new Date().toLocaleTimeString();
+    output.innerHTML += `
+        <div class="message user-message">
+            <div class="timestamp">${timestamp}</div>
+            <div class="content">${messageContent}</div>
+        </div>
+    `;
+    
+    input.value = '';
+    fileList.innerHTML = '';
+    output.scrollTop = output.scrollHeight;
+    
+    try {
+        const response = await fetch('/api_hub/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                message: messageContent,
+                files: files
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'error') {
+            throw new Error(data.error);
+        }
+        
+        // Add assistant response to chat
+        output.innerHTML += `
+            <div class="message assistant-message">
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                <div class="content">${data.response}</div>
+            </div>
+        `;
+        
+        output.scrollTop = output.scrollHeight;
+    } catch (error) {
+        output.innerHTML += `
+            <div class="message error-message">
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                <div class="content">Error: ${error}</div>
+            </div>
+        `;
+        console.error('Error:', error);
+    }
+}
+</script>
+{% endblock %}

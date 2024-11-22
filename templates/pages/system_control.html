@@ -1,0 +1,285 @@
+# File: hal9000/templates/pages/system_control.html
+
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="console-container">
+    <div class="header">
+        <div class="lcars-bar"></div>
+        <h1>HAL9000 SYSTEM CONTROL</h1>
+        <div class="lcars-bar"></div>
+    </div>
+    
+    <div class="navigation-bar">
+        <a href="{{ url_for('index') }}" class="lcars-button nav-button">HOME</a>
+    </div>
+    
+    <div class="main-content">
+        <div class="system-grid">
+            <!-- System Info Panel -->
+            <div class="system-panel">
+                <h2>System Information</h2>
+                <div id="system-info" class="info-content"></div>
+            </div>
+            
+            <!-- System Status Panel -->
+            <div class="system-panel">
+                <h2>System Status</h2>
+                <div id="system-status" class="status-content">
+                    <div class="status-item">
+                        <h3>CPU Usage</h3>
+                        <div class="progress-bar">
+                            <div id="cpu-bar" class="progress"></div>
+                            <span id="cpu-text">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="status-item">
+                        <h3>Memory Usage</h3>
+                        <div class="progress-bar">
+                            <div id="memory-bar" class="progress"></div>
+                            <span id="memory-text">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="status-item">
+                        <h3>Disk Usage</h3>
+                        <div class="progress-bar">
+                            <div id="disk-bar" class="progress"></div>
+                            <span id="disk-text">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Control Panel -->
+            <div class="system-panel">
+                <h2>System Control</h2>
+                <div class="control-buttons">
+                    <button onclick="executeCommand('shutdown')" class="lcars-button">SHUTDOWN</button>
+                    <button onclick="executeCommand('restart')" class="lcars-button">RESTART</button>
+                    <button onclick="executeCommand('sleep')" class="lcars-button">SLEEP</button>
+                    <button onclick="executeCommand('lock')" class="lcars-button">LOCK</button>
+                </div>
+                
+                <div class="app-launcher">
+                    <h3>Launch Application</h3>
+                    <select id="app-select" class="lcars-select">
+                        <option value="calculator">Calculator</option>
+                        <option value="notepad">Notepad</option>
+                    </select>
+                    <button onclick="launchApp()" class="lcars-button">LAUNCH</button>
+                </div>
+            </div>
+            
+            <!-- Process List -->
+            <div class="system-panel">
+                <h2>Top Processes</h2>
+                <div id="process-list" class="process-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.system-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+}
+
+.system-panel {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--lcars-blue);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.progress-bar {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--lcars-purple);
+    border-radius: 5px;
+    height: 20px;
+    position: relative;
+    margin: 10px 0;
+}
+
+.progress {
+    height: 100%;
+    background: var(--lcars-blue);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-bar span {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--lcars-text);
+}
+
+.control-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.app-launcher {
+    margin-top: 20px;
+}
+
+.lcars-select {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--lcars-purple);
+    color: var(--lcars-text);
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.process-content {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.process-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 10px;
+    padding: 5px;
+    border-bottom: 1px solid rgba(153, 153, 255, 0.2);
+}
+</style>
+
+<script>
+function formatBytes(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes === 0) return '0 Byte';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+}
+
+// Update system information
+async function updateSystemInfo() {
+    try {
+        const response = await fetch('/system/info');
+        const data = await response.json();
+        
+        const infoHtml = `
+            <p>Platform: ${data.platform}</p>
+            <p>Processor: ${data.processor}</p>
+            <p>CPU Cores: ${data.cpu_cores}</p>
+            <p>Total Memory: ${formatBytes(data.memory_total)}</p>
+            <p>Hostname: ${data.hostname}</p>
+        `;
+        
+        document.getElementById('system-info').innerHTML = infoHtml;
+    } catch (error) {
+        console.error('Error updating system info:', error);
+    }
+}
+
+// Update system status
+async function updateSystemStatus() {
+    try {
+        const response = await fetch('/system/status');
+        const data = await response.json();
+        
+        // Update CPU
+        const cpuBar = document.getElementById('cpu-bar');
+        const cpuText = document.getElementById('cpu-text');
+        cpuBar.style.width = `${data.cpu.percent}%`;
+        cpuText.textContent = `${data.cpu.percent.toFixed(1)}%`;
+        
+        // Update Memory
+        const memoryBar = document.getElementById('memory-bar');
+        const memoryText = document.getElementById('memory-text');
+        memoryBar.style.width = `${data.memory.percent}%`;
+        memoryText.textContent = `${data.memory.percent.toFixed(1)}%`;
+        
+        // Update Disk
+        const diskBar = document.getElementById('disk-bar');
+        const diskText = document.getElementById('disk-text');
+        diskBar.style.width = `${data.disk.percent}%`;
+        diskText.textContent = `${data.disk.percent.toFixed(1)}%`;
+        
+        // Update process list
+        const processList = document.getElementById('process-list');
+        processList.innerHTML = data.top_processes.map(proc => `
+            <div class="process-item">
+                <span>${proc.pid}</span>
+                <span>${proc.name}</span>
+                <span>${proc.cpu_percent.toFixed(1)}% CPU</span>
+                <span>${proc.memory_percent.toFixed(1)}% MEM</span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error updating system status:', error);
+    }
+}
+
+// Execute system command
+async function executeCommand(command) {
+    if (!confirm(`Are you sure you want to ${command} the system?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/system/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ command: command })
+        });
+        
+        const data = await response.json();
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error executing command:', error);
+        alert('Error executing command');
+    }
+}
+
+// Launch application
+async function launchApp() {
+    const appSelect = document.getElementById('app-select');
+    const app = appSelect.value;
+    
+    try {
+        const response = await fetch('/system/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                command: 'launch_app',
+                args: { app_name: app }
+            })
+        });
+        
+        const data = await response.json();
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error launching app:', error);
+        alert('Error launching application');
+    }
+}
+
+// Update status every 5 seconds
+updateSystemInfo();
+updateSystemStatus();
+setInterval(updateSystemStatus, 5000);
+</script>
+{% endblock %}
